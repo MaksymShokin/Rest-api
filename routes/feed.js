@@ -20,7 +20,7 @@ router.post(
 
       body('content', 'Content should be at least 5 chars long')
         .trim()
-        .isLength({ min: 55 })
+        .isLength({ min: 5 })
     ]
   ],
   feedController.postPosts
