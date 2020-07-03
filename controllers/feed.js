@@ -1,6 +1,14 @@
 exports.getPosts = (req, res, next) => {
   res.status(200).json({
-    posts: [{ title: 'Hello REST API', content: 'bla bla' }]
+    posts: [
+      {
+        title: 'Hello REST API',
+        content: 'bla bla',
+        creator: { name: 'Maksym' },
+        image: 'images/MyAppCost.png',
+        createdAt: new Date()
+      }
+    ]
   });
 };
 
@@ -11,6 +19,12 @@ exports.postPosts = (req, res, text) => {
   // create post in db
   res.status(201).json({
     message: 'Success',
-    post: { id: Math.random(), title: title, content: content }
+    post: {
+      _id: Math.random(),
+      title: title,
+      content: content,
+      creator: { name: 'Maksym' },
+      createdAt: new Date()
+    }
   });
 };
