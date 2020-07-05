@@ -23,17 +23,20 @@ exports.postPosts = (req, res, text) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return res.status('422').json({
-      message: 'Validation failure',
-      validationErrors: errors.array()
-    });
+    const error = new Error('Data validation failure');
+    error.statusCode = 422;
+    throw error;
+    // return res.status('422').json({
+    //   message: 'Validation failure',
+    //   validationErrors: errors.array()
+    // });
   }
 
   const postData = new Post({
     title: title,
     content: content,
     imageUrl: '../images/MyAppCost.png',
-    creator:  { name: 'Maksym' },
+    creator: { name: 'Maksym' }
   });
 
   postData
@@ -45,6 +48,10 @@ exports.postPosts = (req, res, text) => {
       });
     })
     .catch(err => {
-      console.log(err)
-    }); 
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+
+      next(err);
+    });
 };
