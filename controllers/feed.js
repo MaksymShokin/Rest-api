@@ -17,10 +17,6 @@ exports.getPosts = (req, res, next) => {
 };
 
 exports.postPosts = (req, res, next) => {
-  const title = req.body.title;
-  const content = req.body.content;
-  const imageUrl = req.file.path.replace("\\" ,"/");
-
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -29,10 +25,21 @@ exports.postPosts = (req, res, next) => {
     throw error;
   }
 
+  if (!req.file) {
+    const error = new Error('No image provided');
+    error.statusCode = 422;
+    throw error;
+  }
+
+  const title = req.body.title;
+  const content = req.body.content;
+  const imageUrl = req.file.path.replace("\\" ,"/");
+
   const postData = new Post({
     title: title,
     content: content,
-    imageUrl: '../images/MyAppCost.png',
+    imageUrl: imageUrl,
+    // imageUrl: '../images/MyAppCost.png',
     creator: { name: 'Maksym' }
   });
 
