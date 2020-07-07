@@ -13,21 +13,35 @@ router.get('/posts', feedController.getPosts);
 router.post(
   '/posts',
   [
-    [
-      body('title', 'Title should be at least 5 chars long')
-        .trim()
-        .isLength({ min: 5 }),
+    body('title', 'Title should be at least 5 chars long')
+      .trim()
+      .isLength({ min: 5 }),
 
-      body('content', 'Content should be at least 5 chars long')
-        .trim()
-        .isLength({ min: 5 })
-    ]
+    body('content', 'Content should be at least 5 chars long')
+      .trim()
+      .isLength({ min: 5 })
   ],
   feedController.postPosts
 );
 
 // single post
 // GET /feed/post
-router.get('/post/:postId', feedController.getPost)
+router.get('/post/:postId', feedController.getPost);
+
+// update post
+// PUT /feed/post
+router.put(
+  '/post/:postId',
+  [
+    body('title', 'Title should be at least 5 chars long')
+      .trim()
+      .isLength({ min: 5 }),
+
+    body('content', 'Content should be at least 5 chars long')
+      .trim()
+      .isLength({ min: 5 })
+  ],
+  feedController.updatePost
+);
 
 module.exports = router;
