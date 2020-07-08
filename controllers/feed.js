@@ -4,6 +4,7 @@ const fs = require('fs');
 const { validationResult } = require('express-validator');
 
 const Post = require('../models/post');
+const User = require('../models/user');
 
 exports.getPosts = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -18,13 +19,11 @@ exports.getPosts = (req, res, next) => {
         .limit(ITEMS_PER_PAGE);
     })
     .then(posts => {
-      res
-        .status(200)
-        .json({
-          message: 'Posts fetched',
-          posts: posts,
-          totalItems: totalItems
-        });
+      res.status(200).json({
+        message: 'Posts fetched',
+        posts: posts,
+        totalItems: totalItems
+      });
     })
     .catch(err => {
       if (!err.statusCode) {
@@ -54,19 +53,30 @@ exports.postPosts = (req, res, next) => {
   const content = req.body.content;
   const imageUrl = req.file.path.replace('\\', '/');
 
+  let creator;
+
   const postData = new Post({
     title: title,
     content: content,
     imageUrl: imageUrl,
-    creator: { name: 'Maksym' }
+    creator: req.userId
   });
 
   postData
     .save()
     .then(result => {
+      return User.findById(req.userId);
+    })
+    .then(user => {
+      user.posts.push(postData);
+      creator = user;
+      return user.save();
+    })
+    .then(result => {
       res.status(201).json({
-        message: 'Success',
-        post: result
+        message: 'Post created successfully',
+        post: postData,
+        creator: { _id: creator._id, name: creator.name }
       });
     })
     .catch(err => {
