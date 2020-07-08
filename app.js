@@ -68,3 +68,4 @@ mongoose
 // npm install --save uuid
 // npm install --save multer
 // npm install --save bcryptjs
+// npm install --save jsonwebtoken

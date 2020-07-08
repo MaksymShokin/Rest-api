@@ -10,10 +10,11 @@ const router = express.Router();
 
 // auth/signup
 router.put(
-  '/signup/',
+  '/signup',
   [
     body('email', 'Email is not valid')
       .isEmail()
+      .normalizeEmail()
       .custom((value, { req }) => {
         return User.findOne({ email: value }).then(userData => {
           if (userData) {
@@ -24,11 +25,11 @@ router.put(
     body('password', 'Password should be at least 5 chars long')
       .trim()
       .isLength({ min: 5 }),
-    body('name', 'Name should be at least 5 chars long')
-      .trim()
-      .notEmpty()
+    body('name', 'Name should be at least 5 chars long').trim().notEmpty()
   ],
   authController.putSignup
 );
+
+router.post('/login', authController.postLogin);
 
 module.exports = router;
