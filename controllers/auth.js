@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const User = require('../models/user');
 
@@ -76,13 +77,11 @@ exports.postLogin = (req, res, next) => {
           { expiresIn: '1h' }
         );
 
-        res
-          .status(200)
-          .json({
-            message: 'Login successful',
-            token: token,
-            userId: loadedUser._id.toString()
-          });
+        res.status(200).json({
+          message: 'Login successful',
+          token: token,
+          userId: loadedUser._id.toString()
+        });
       })
       .catch(err => {
         if (!err.statusCode) {
@@ -92,4 +91,50 @@ exports.postLogin = (req, res, next) => {
         next(err);
       });
   });
+};
+
+exports.getStatus = (req, res, next) => {
+  User.findById(req.userId)
+    .then(user => {
+      if (!user) {
+        const error = new Error('User does not exist');
+        error.statusCode = 401;
+        throw error;
+      }
+
+      res.status(200).json({ message: 'Status fetched', status: user.status });
+    })
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+
+      next(err);
+    });
+};
+
+exports.putStatus = (req, res, next) => {
+  const updatedStatus = req.body.status;
+  
+  User.findById(req.userId)
+    .then(user => {
+      if (!user) {
+        const error = new Error('User does not exist');
+        error.statusCode = 401;
+        throw error;
+      }
+    
+      user.status = updatedStatus;
+      return user.save();
+    })
+    .then(result => {
+      res.status(200).json({ message: 'Status updated', status: result.status });
+    })
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+
+      next(err);
+    });
 };
