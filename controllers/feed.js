@@ -3,8 +3,10 @@ const fs = require('fs');
 
 const { validationResult } = require('express-validator');
 
+const io = require('../socket');
 const Post = require('../models/post');
 const User = require('../models/user');
+const user = require('../models/user');
 
 exports.getPosts = async (req, res, next) => {
   const page = +req.query.page || 1;
@@ -14,6 +16,7 @@ exports.getPosts = async (req, res, next) => {
     const totalItems = await Post.find().countDocuments();
     const posts = await Post.find()
       .populate('creator')
+      .sort({ createdAt: -1 })
       .skip((page - 1) * ITEMS_PER_PAGE)
       .limit(ITEMS_PER_PAGE);
 
@@ -64,6 +67,8 @@ exports.postPosts = async (req, res, next) => {
     user.posts.push(postData);
     await user.save();
 
+    io.getIO().emit('posts', { action: 'create', post: postData });
+
     res.status(201).json({
       message: 'Post created successfully',
       post: postData,
@@ -90,7 +95,10 @@ exports.getPost = async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json({ message: 'Post fetched', post: post });
+    res.status(200).json({
+      message: 'Post fetched',
+      post: { ...post._doc, creator: { _id: req.userId, name: user.name } }
+    });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -126,7 +134,7 @@ exports.updatePost = async (req, res, next) => {
   }
 
   try {
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate('creator');
 
     if (!post) {
       const error = new Error('Could not find post');
@@ -134,7 +142,7 @@ exports.updatePost = async (req, res, next) => {
       throw error;
     }
 
-    if (post.creator.toString() !== req.userId) {
+    if (post.creator._id.toString() !== req.userId) {
       const error = new Error('Not authorized');
       error.statusCode = 403;
       throw error;
@@ -148,6 +156,8 @@ exports.updatePost = async (req, res, next) => {
     post.content = content;
     post.imageUrl = imageUrl;
     const result = await post.save();
+
+    io.getIO().emit('posts', { action: 'update', post: result });
 
     res.status(200).json({ message: 'Updated succesfully', post: result });
   } catch (err) {
@@ -185,6 +195,7 @@ exports.deletePost = async (req, res, next) => {
 
     await user.save();
 
+    io.getIO().emit('posts', { action: 'delete', post: postId });
     res.status(200).json({ message: 'Deleted succesfully' });
   } catch (err) {
     if (!err.statusCode) {
